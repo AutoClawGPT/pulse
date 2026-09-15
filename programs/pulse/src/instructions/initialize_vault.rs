@@ -6,7 +6,6 @@ use crate::{constants::VAULT_SEED, state::Vault};
 pub struct InitializeVault<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
-    pub authority: Signer<'info>,
     #[account(
         init,
         payer = payer,
@@ -20,7 +19,7 @@ pub struct InitializeVault<'info> {
 
 pub fn handle_initialize_vault(ctx: Context<InitializeVault>) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
-    vault.authority = ctx.accounts.authority.key();
+    vault.authority = ctx.accounts.payer.key();
     vault.bump = ctx.bumps.vault;
     vault.total_deposits = 0;
     Ok(())

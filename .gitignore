@@ -54,3 +54,4 @@ test-ledger
 crank/.env
 data/
 *.log
+.env*

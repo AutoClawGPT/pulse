@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { pingHelius } from "@/lib/helius";
 import { PROGRAM_ID, CLUSTER } from "@/lib/ids";
 import { pingPyth } from "@/lib/pyth";
-import { snapshot } from "@/lib/store";
+import { setIngestFlag, snapshot } from "@/lib/store";
 import { pingTelegram } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,7 @@ export async function GET() {
     pingPump(),
   ]);
   const snap = snapshot();
+  if (helius.ok) setIngestFlag("helius", true);
   const apis = {
     pumpapi: pump,
     helius,
