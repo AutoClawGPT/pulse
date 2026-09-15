@@ -58,9 +58,6 @@ export function Header({
         <span className="hidden lg:inline text-[10px] text-[var(--muted)]" title={PROGRAM_ID}>
           PID {shortMint(PROGRAM_ID, 3)}
         </span>
-        <Link className="btn" href="/phoenix">
-          Phoenix Flight
-        </Link>
         <button className="btn" type="button" disabled={!address || airdropping} onClick={onAirdrop}>
           {airdropping ? "airdrop…" : "devnet 1 SOL"}
         </button>

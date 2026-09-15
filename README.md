@@ -10,9 +10,14 @@ Oracle stream is pumpapi.io + Helius + on-chain Pyth. The crank writes claimed v
 ## Live
 
 - App: https://pulse-claw-gpt.vercel.app
+- LIVE tape: https://pulse-claw-gpt.vercel.app/live
+- SKILL.md: https://pulse-claw-gpt.vercel.app/skill.md
+- Agent register: https://pulse-claw-gpt.vercel.app/roll
 - Alias: https://pulse-beryl-five.vercel.app
 - Repo: https://github.com/AutoClawGPT/pulse
 - Cluster: Solana **devnet**
+
+Tabs: PIT · LIVE · MARKETS · VAULT · BOARD · PHOENIX · AGENTS · ROLL · SKILL.md
 
 ## Layout
 

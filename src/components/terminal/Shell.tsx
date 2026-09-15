@@ -2,16 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
+import { Chrome } from "@/components/Chrome";
 import { useSession } from "@/components/providers";
-import { useLiveTape } from "@/hooks/use-live-tape";
-import { postOp, usePulse } from "@/hooks/use-pulse";
-import { AGENT_ID } from "@/lib/ids";
 import { BottomStrip } from "./BottomStrip";
-import { Header } from "./Header";
 import { OddsBoard } from "./OddsBoard";
 import { Pit } from "./Pit";
 import { PulseTicket } from "./PulseTicket";
 import { Tape } from "./Tape";
+import { useLiveTape } from "@/hooks/use-live-tape";
+import { postOp, usePulse } from "@/hooks/use-pulse";
+import { AGENT_ID } from "@/lib/ids";
 
 function beep() {
   try {
@@ -37,7 +37,6 @@ export function Shell() {
   const owner = address ?? "paper-desk";
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [airdropping, setAirdropping] = useState(false);
   const reduce = useReducedMotion();
   const seen = useRef(new Set<string>());
 
@@ -96,27 +95,17 @@ export function Shell() {
     });
   }
 
-  async function airdrop() {
-    if (!address) return;
-    setAirdropping(true);
-    await fetch("/api/airdrop", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ address }),
-    });
-    setAirdropping(false);
-  }
-
   return (
-    <div className="terminal">
-      <Header
-        live={live.live || Boolean(data?.ingest.pumpapi)}
-        solUsd={data?.solUsd ?? 0}
-        helius={Boolean(data?.ingest.helius)}
-        pyth={Boolean(data?.ingest.pyth) || (data?.solUsd ?? 0) > 0}
-        onAirdrop={airdrop}
-        airdropping={airdropping}
-      />
+    <Chrome
+      pit
+      footer={
+        <BottomStrip
+          fills={data?.fills ?? []}
+          positions={(data?.positions ?? []).filter((p) => p.owner === owner || p.owner === AGENT_ID)}
+          liqs={data?.liqs ?? []}
+        />
+      }
+    >
       <div className="terminal-main">
         <Tape
           tape={tape}
@@ -137,16 +126,11 @@ export function Shell() {
           onDeposit={(n) => void postOp({ op: "deposit", owner, amount: n })}
         />
       </div>
-      <BottomStrip
-        fills={data?.fills ?? []}
-        positions={(data?.positions ?? []).filter((p) => p.owner === owner || p.owner === AGENT_ID)}
-        liqs={data?.liqs ?? []}
-      />
       {error ? (
         <div className="fixed bottom-24 left-3 z-40 border border-[var(--hazard)] bg-[var(--bg)] px-3 py-2 text-[var(--hazard)]" role="alert">
           {error}
         </div>
       ) : null}
-    </div>
+    </Chrome>
   );
 }

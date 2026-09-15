@@ -72,9 +72,19 @@ body {
 
 .terminal {
   display: grid;
-  grid-template-rows: 40px 1fr 92px;
   height: 100dvh;
   min-height: 100dvh;
+  background: var(--bg);
+}
+.terminal-pit {
+  grid-template-rows: 40px 32px 1fr 92px;
+}
+.terminal-page {
+  grid-template-rows: 40px 32px 1fr;
+}
+.page-body {
+  min-height: 0;
+  overflow: auto;
   background: var(--bg);
 }
 
@@ -209,6 +219,11 @@ select {
   .terminal {
     height: auto;
     min-height: 100dvh;
+  }
+  .terminal-pit {
+    grid-template-rows: auto auto auto auto;
+  }
+  .terminal-page {
     grid-template-rows: auto auto auto;
   }
   .terminal-main {
