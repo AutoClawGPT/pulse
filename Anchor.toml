@@ -1,0 +1,22 @@
+skip_local_validator = true
+
+[toolchain]
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+pulse = "5R6eUuZYg158N9TELM8cr2yLNWWzMgmbknx5aDuMeZyv"
+
+[programs.devnet]
+pulse = "5R6eUuZYg158N9TELM8cr2yLNWWzMgmbknx5aDuMeZyv"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test"
+
+[hooks]
