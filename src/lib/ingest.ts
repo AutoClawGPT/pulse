@@ -1,4 +1,5 @@
 import { maybeSpawnFromCreate, resolveIfDue } from "./markets";
+import { PUMP_WS, toTape, type PumpEvent } from "./pump-event";
 import { fetchSolUsd } from "./pyth";
 import {
   getMarket,
@@ -8,41 +9,6 @@ import {
   setSolUsd,
   snapshot,
 } from "./store";
-import type { TapeEvent } from "./types";
-
-const PUMP_WS = "wss://stream.pumpapi.io/";
-
-type PumpEvent = {
-  action?: string;
-  mint?: string;
-  symbol?: string;
-  name?: string;
-  marketCapQuote?: number;
-  pool?: string;
-  signature?: string;
-  timestamp?: number;
-  uri?: string;
-};
-
-function toTape(ev: PumpEvent): TapeEvent | null {
-  const action = ev.action ?? "";
-  if (!["create", "buy", "sell", "migrate"].includes(action)) return null;
-  if (ev.pool && ev.pool !== "pump" && action !== "migrate") {
-    if (action !== "create") return null;
-  }
-  return {
-    id: ev.signature ?? `${action}-${ev.mint}-${ev.timestamp}`,
-    ts: ev.timestamp ?? Date.now(),
-    action,
-    mint: ev.mint,
-    symbol: ev.symbol,
-    name: ev.name,
-    mcSol: ev.marketCapQuote,
-    pool: ev.pool,
-    signature: ev.signature,
-    uri: ev.uri,
-  };
-}
 
 declare global {
   // eslint-disable-next-line no-var
@@ -109,6 +75,8 @@ async function pythLoop() {
 
 export function startIngest() {
   if (process.env.NEXT_PHASE === "phase-production-build") return;
+  // Vercel functions cannot hold the pumpapi WS. Browser tape + crank do.
+  if (process.env.VERCEL) return;
   if (globalThis.__PULSE_INGEST__?.started) return;
   globalThis.__PULSE_INGEST__ = { started: true };
   void pumpLoop();

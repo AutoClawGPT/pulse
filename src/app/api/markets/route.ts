@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { startIngest } from "@/lib/ingest";
+import { fetchSolUsd } from "@/lib/pyth";
 import {
   applyOddsTrade,
   closePulse,
   deposit,
   openPulse,
+  setSolUsd,
   snapshot,
   withdraw,
 } from "@/lib/store";
@@ -13,6 +15,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   startIngest();
+  const mark = await fetchSolUsd();
+  if (mark.price) setSolUsd(mark.price);
   return NextResponse.json(snapshot());
 }
 

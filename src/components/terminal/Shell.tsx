@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { useSession } from "@/components/providers";
+import { useLiveTape } from "@/hooks/use-live-tape";
 import { postOp, usePulse } from "@/hooks/use-pulse";
 import { AGENT_ID } from "@/lib/ids";
 import { BottomStrip } from "./BottomStrip";
@@ -31,6 +32,7 @@ function beep() {
 
 export function Shell() {
   const { data, error } = usePulse();
+  const live = useLiveTape(data?.solUsd ?? 180);
   const { address } = useSession();
   const owner = address ?? "paper-desk";
   const [selected, setSelected] = useState<string | null>(null);
@@ -39,19 +41,27 @@ export function Shell() {
   const reduce = useReducedMotion();
   const seen = useRef(new Set<string>());
 
+  const markets = useMemo(() => {
+    const map = new Map((data?.markets ?? []).map((m) => [m.id, m]));
+    for (const m of live.markets) {
+      if (!map.has(m.id)) map.set(m.id, m);
+    }
+    return [...map.values()].sort((a, b) => b.createdAt - a.createdAt);
+  }, [data, live.markets]);
+
+  const tape = live.tape.length ? live.tape : (data?.tape ?? []);
+
   const market = useMemo(() => {
-    if (!data) return null;
-    return data.markets.find((m) => m.id === selected) ?? data.markets[0] ?? null;
-  }, [data, selected]);
+    return markets.find((m) => m.id === selected) ?? markets[0] ?? null;
+  }, [markets, selected]);
 
   useEffect(() => {
-    if (!data) return;
-    for (const m of data.markets) {
+    for (const m of markets) {
       if (seen.current.has(m.id)) continue;
       seen.current.add(m.id);
       if (seen.current.size > 1 && !reduce) beep();
     }
-  }, [data, reduce]);
+  }, [markets, reduce]);
 
   const vault = data
     ? {
@@ -100,15 +110,17 @@ export function Shell() {
   return (
     <div className="terminal">
       <Header
-        live={Boolean(data?.ingest.pumpapi)}
+        live={live.live || Boolean(data?.ingest.pumpapi)}
         solUsd={data?.solUsd ?? 0}
+        helius={Boolean(data?.ingest.helius)}
+        pyth={Boolean(data?.ingest.pyth) || (data?.solUsd ?? 0) > 0}
         onAirdrop={airdrop}
         airdropping={airdropping}
       />
       <div className="terminal-main">
         <Tape
-          tape={data?.tape ?? []}
-          markets={data?.markets ?? []}
+          tape={tape}
+          markets={markets}
           solUsd={data?.solUsd ?? 180}
           selected={market?.id ?? null}
           onSelect={setSelected}

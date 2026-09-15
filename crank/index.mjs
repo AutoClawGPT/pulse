@@ -94,18 +94,26 @@ function toTape(ev) {
   };
 }
 
+let lastWs = 0;
+
 async function pumpLoop() {
-  let backoff = 500;
+  let backoff = 1500;
   for (;;) {
     try {
       await new Promise((resolve, reject) => {
         const ws = new WebSocket(PUMP_WS);
+        const timer = setTimeout(() => {
+          ws.terminate();
+          reject(new Error("open timeout"));
+        }, 8000);
         ws.on("open", () => {
-          backoff = 500;
+          clearTimeout(timer);
+          backoff = 1500;
           console.log("pumpapi stream open");
         });
         ws.on("message", (data) => {
           try {
+            lastWs = Date.now();
             const raw = JSON.parse(String(data));
             const tape = toTape(raw);
             if (!tape) return;
@@ -118,14 +126,60 @@ async function pumpLoop() {
             /* ignore */
           }
         });
-        ws.on("error", reject);
-        ws.on("close", resolve);
+        ws.on("error", (e) => {
+          clearTimeout(timer);
+          reject(e);
+        });
+        ws.on("close", () => {
+          clearTimeout(timer);
+          resolve();
+        });
       });
     } catch (e) {
-      console.error("pump ws", e);
+      console.error("pump ws", e.message || e);
     }
     await sleep(backoff);
-    backoff = Math.min(backoff * 2, 15000);
+    backoff = Math.min(backoff * 2, 30_000);
+  }
+}
+
+/** If pumpapi WS goes quiet, pull recent pump.fun creates + Helius slot. */
+async function fallbackLoop() {
+  for (;;) {
+    await sleep(12_000);
+    if (Date.now() - lastWs < 15_000 && lastWs !== 0) continue;
+    console.log("pumpapi quiet — Helius / pump.fun REST fallback");
+    try {
+      const res = await fetch(
+        "https://frontend-api-v3.pump.fun/coins?offset=0&limit=30&sort=created_timestamp&order=DESC&includeNsfw=false",
+        { headers: { accept: "application/json" } },
+      );
+      if (res.ok) {
+        const coins = await res.json();
+        for (const c of coins.slice(0, 12)) {
+          const tape = {
+            id: `rest-${c.mint}-${c.created_timestamp}`,
+            ts: Number(c.created_timestamp) || Date.now(),
+            action: "create",
+            mint: c.mint,
+            symbol: c.symbol,
+            name: c.name,
+            mcSol: c.usd_market_cap ? c.usd_market_cap / 180 : c.market_cap,
+            pool: "pump",
+          };
+          void intake("tape", tape);
+        }
+      }
+    } catch (e) {
+      console.error("fallback rest", e);
+    }
+    try {
+      if (HELIUS_KEY) {
+        await fetch(`https://api.helius.xyz/v0/addresses/6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P/transactions?api-key=${HELIUS_KEY}&limit=5`);
+      }
+    } catch {
+      /* slot/health only */
+    }
   }
 }
 
@@ -154,3 +208,4 @@ console.log("PULSE crank →", WEB);
 void telegram("PULSE crank online (devnet). Tape from pumpapi.io.");
 void pumpLoop();
 void markLoop();
+void fallbackLoop();

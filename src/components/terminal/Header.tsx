@@ -9,11 +9,15 @@ import { useSession } from "@/components/providers";
 export function Header({
   live,
   solUsd,
+  helius,
+  pyth,
   onAirdrop,
   airdropping,
 }: {
   live: boolean;
   solUsd: number;
+  helius: boolean;
+  pyth: boolean;
   onAirdrop: () => void;
   airdropping: boolean;
 }) {
@@ -34,9 +38,23 @@ export function Header({
         />
       </div>
       <div className="flex items-center gap-2">
-        <span className="hidden md:inline text-[10px] text-[var(--muted)]">
-          SOL {solUsd.toFixed(2)}
-        </span>
+        <a
+          className="hidden md:inline btn !px-2 !py-1 text-[10px]"
+          href="https://www.pyth.network/price-feeds/crypto-sol-usd"
+          target="_blank"
+          rel="noreferrer"
+          title="SOL/USD from on-chain Pyth via Helius"
+        >
+          Pyth {pyth ? solUsd.toFixed(2) : "—"}
+        </a>
+        <a
+          className="hidden md:inline btn !px-2 !py-1 text-[10px]"
+          href="https://www.helius.dev"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Helius {helius ? "RPC" : "down"}
+        </a>
         <span className="hidden lg:inline text-[10px] text-[var(--muted)]" title={PROGRAM_ID}>
           PID {shortMint(PROGRAM_ID, 3)}
         </span>
